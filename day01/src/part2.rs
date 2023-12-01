@@ -45,12 +45,12 @@ mod tests {
     #[case("4nineeightseven2", 42)]
     #[case("zoneight234", 14)]
     #[case("7pqrstsixteen", 76)]
-    fn line_test(#[case] line: &str, #[case] expected: u32) {
+    fn d01p2_lines(#[case] line: &str, #[case] expected: u32) {
         assert_eq!(expected, part2(line))
     }
 
     #[test]
-    fn test() {
+    fn d01p2_full_input() {
         let input = "two1nine
 eightwothree
 abcone2threexyz

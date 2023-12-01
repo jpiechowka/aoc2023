@@ -25,7 +25,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test() {
+    fn d01p1_full_input() {
         let input = "1abc2
 pqr3stu8vwx
 a1b2c3d4e5f
