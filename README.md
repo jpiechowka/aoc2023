@@ -2,14 +2,11 @@
 
 Advent of Code 2023 in Rust (https://adventofcode.com/)
 
-## Day 01
+## Solutions
 
-### Part 1
-
-Solution: 54605
-
-### Part 2
-
-Solution: 55429
-
-## Day 02
+| Day | Part | Solution |
+|-----|------|----------|
+| 01  | 1    | 54605    |
+| 01  | 2    | 55429    |
+| 02  | 1    | 3059     |
+| 02  | 2    | 65371    |

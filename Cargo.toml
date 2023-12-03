@@ -2,9 +2,12 @@
 resolver = "2"
 
 members = [
-    "day01"
+    "day01",
+    "day02"
 ]
 
 [workspace.dependencies]
 itertools = "0.12.0"
 rstest = "0.18.2"
+nom = "7.1.3"
+rayon = "1.8.0"

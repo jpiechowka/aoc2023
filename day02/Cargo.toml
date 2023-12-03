@@ -1,15 +1,17 @@
 [package]
-name = "day01"
+name = "day02"
 version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "d01p1"
+name = "d02p1"
 path = "src/part1.rs"
 
 [[bin]]
-name = "d01p2"
+name = "d02p2"
 path = "src/part2.rs"
 
 [dependencies]
 rstest = { workspace = true }
+nom = { workspace = true }
+rayon = { workspace = true }
