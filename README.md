@@ -14,3 +14,5 @@ Advent of Code 2023 in Rust (https://adventofcode.com/)
 | 03  | 2    | 78826761 |
 | 04  | 1    | 22488    |
 | 04  | 2    | 7013204  |
+| 05  | 1    | xxx      |
+| 05  | 2    | xxx      |
