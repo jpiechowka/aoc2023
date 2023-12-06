@@ -1,7 +1,13 @@
+use std::time::Instant;
+
+mod parser;
+
 fn main() {
+    let start_time = Instant::now();
     let input_file = include_str!("../input_p2.txt");
     let solution = part2(input_file);
-    println!("{solution}");
+    let execution_time = start_time.elapsed().as_secs();
+    println!("[{execution_time:?} seconds] {solution}");
 }
 
 fn part2(input: &str) -> u32 {
