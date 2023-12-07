@@ -1,5 +1,7 @@
 use std::time::Instant;
 
+use crate::parser::parse_almanac;
+
 mod parser;
 
 fn main() {
@@ -11,6 +13,8 @@ fn main() {
 }
 
 fn part1(input: &str) -> u32 {
+    let (_input, almanac) = parse_almanac(input).expect("should parse input");
+    dbg!(almanac);
     todo!()
 }
 
