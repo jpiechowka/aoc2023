@@ -1,5 +1,7 @@
 use std::time::Instant;
 
+use crate::parser::parse_races_part1;
+
 mod parser;
 
 fn main() {
@@ -11,7 +13,19 @@ fn main() {
 }
 
 fn part1(input: &str) -> u64 {
-    todo!()
+    let (_, races) = parse_races_part1(input).expect("should parse input");
+
+    races
+        .iter()
+        .map(|race| {
+            (1..race.time)
+                .filter(|speed| {
+                    let distance = speed * (race.time - speed);
+                    distance > race.distance
+                })
+                .count() as u64
+        })
+        .product()
 }
 
 #[cfg(test)]

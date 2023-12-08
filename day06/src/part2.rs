@@ -1,5 +1,7 @@
 use std::time::Instant;
 
+use crate::parser::parse_race_part2;
+
 mod parser;
 
 fn main() {
@@ -11,7 +13,14 @@ fn main() {
 }
 
 fn part2(input: &str) -> u64 {
-    todo!()
+    let (_, race) = parse_race_part2(input).expect("should parse input");
+
+    (1..race.time)
+        .filter(|speed| {
+            let distance = speed * (race.time - speed);
+            distance > race.distance
+        })
+        .count() as u64
 }
 
 #[cfg(test)]
@@ -23,6 +32,6 @@ mod tests {
         let input = "Time:      7  15   30
 Distance:  9  40  200";
 
-        assert_eq!(part2(input), 0);
+        assert_eq!(part2(input), 71503);
     }
 }
