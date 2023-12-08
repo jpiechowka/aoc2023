@@ -1,5 +1,7 @@
 use std::time::Instant;
 
+use crate::parser::{parse_input, Instruction};
+
 mod parser;
 
 fn main() {
@@ -11,7 +13,33 @@ fn main() {
 }
 
 fn part1(input: &str) -> u64 {
-    todo!()
+    let (_, (instructions, map)) = parse_input(input).expect("should parse input");
+    let mut current_node = "AAA";
+    let Some(step_count) =
+        instructions
+            .iter()
+            .cycle()
+            .enumerate()
+            .find_map(|(idx, instruction)| {
+                let directions = map
+                    .get(current_node)
+                    .expect("should get current node from map");
+                let next_node = match instruction {
+                    Instruction::Right => directions.1,
+                    Instruction::Left => directions.0,
+                };
+                if next_node == "ZZZ" {
+                    Some(idx + 1)
+                } else {
+                    current_node = next_node;
+                    None
+                }
+            })
+    else {
+        panic!()
+    };
+
+    step_count as u64
 }
 
 #[cfg(test)]
@@ -19,9 +47,28 @@ mod tests {
     use super::*;
 
     #[test]
-    fn d08p1_full_input() {
-        let input = "";
+    fn d08p1_first_input() {
+        let input = "RL
 
-        assert_eq!(part1(input), 0);
+AAA = (BBB, CCC)
+BBB = (DDD, EEE)
+CCC = (ZZZ, GGG)
+DDD = (DDD, DDD)
+EEE = (EEE, EEE)
+GGG = (GGG, GGG)
+ZZZ = (ZZZ, ZZZ)";
+
+        assert_eq!(part1(input), 2);
+    }
+
+    #[test]
+    fn d08p1_second_input() {
+        let input = "LLR
+
+AAA = (BBB, BBB)
+BBB = (AAA, ZZZ)
+ZZZ = (ZZZ, ZZZ)";
+
+        assert_eq!(part1(input), 6);
     }
 }
