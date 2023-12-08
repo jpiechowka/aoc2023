@@ -3,13 +3,13 @@ use std::collections::BTreeMap;
 use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::character::complete;
-use nom::character::complete::{alpha1, line_ending, multispace1};
+use nom::character::complete::{alphanumeric1, line_ending, multispace1};
 use nom::combinator::eof;
 use nom::multi::{fold_many1, many1};
 use nom::sequence::{delimited, separated_pair, terminated};
 use nom::{IResult, Parser};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Instruction {
     Left,
     Right,
@@ -25,11 +25,11 @@ pub fn parse_input(input: &str) -> IResult<&str, (Vec<Instruction>, BTreeMap<&st
     let (input, map) = fold_many1(
         terminated(
             separated_pair(
-                alpha1,
+                alphanumeric1,
                 tag(" = "),
                 delimited(
                     complete::char('('),
-                    separated_pair(alpha1, tag(", "), alpha1),
+                    separated_pair(alphanumeric1, tag(", "), alphanumeric1),
                     complete::char(')'),
                 ),
             ),
