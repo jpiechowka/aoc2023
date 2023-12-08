@@ -1,5 +1,7 @@
 use std::time::Instant;
 
+use crate::parser::parse_input_part2;
+
 mod parser;
 
 fn main() {
@@ -11,7 +13,22 @@ fn main() {
 }
 
 fn part2(input: &str) -> u64 {
-    todo!()
+    let mut hands = parse_input_part2(input);
+
+    hands.sort_by(|a, b| {
+        b.hand_type
+            .cmp(&a.hand_type)
+            .then_with(|| b.cards.iter().cmp(a.cards.iter()))
+    });
+
+    hands
+        .iter()
+        .enumerate()
+        .map(|(idx, hand)| {
+            let rank = (hands.len() - idx) as u64;
+            hand.bid * rank
+        })
+        .sum()
 }
 
 #[cfg(test)]
@@ -26,6 +43,6 @@ KK677 28
 KTJJT 220
 QQQJA 483";
 
-        assert_eq!(part2(input), 0);
+        assert_eq!(part2(input), 5905);
     }
 }
