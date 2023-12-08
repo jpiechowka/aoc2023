@@ -13,3 +13,4 @@ path = "src/part2.rs"
 
 [dependencies]
 nom = { workspace = true }
+rayon = { workspace = true }

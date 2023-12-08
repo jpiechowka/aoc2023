@@ -1,72 +1,91 @@
 use std::ops::Range;
 
+use nom::branch::alt;
 use nom::bytes::complete::{tag, tag_no_case};
-use nom::character::complete::{digit1, line_ending, multispace1, space1};
+use nom::character::complete::{digit1, multispace1, space1};
 use nom::combinator::map_res;
 use nom::multi::{many1, separated_list1};
-use nom::sequence::{preceded, tuple};
-use nom::IResult;
+use nom::sequence::{preceded, separated_pair, tuple};
+use nom::{IResult, Parser};
 
 #[derive(Debug)]
-pub struct Almanac {
-    pub seeds: Vec<u64>,
-    pub seed_to_soil: Vec<(Range<u64>, Range<u64>)>,
-    pub soil_to_fertilizer: Vec<(Range<u64>, Range<u64>)>,
-    pub fertilizer_to_water: Vec<(Range<u64>, Range<u64>)>,
-    pub water_to_light: Vec<(Range<u64>, Range<u64>)>,
-    pub light_to_temperature: Vec<(Range<u64>, Range<u64>)>,
-    pub temperature_to_humidity: Vec<(Range<u64>, Range<u64>)>,
-    pub humidity_to_location: Vec<(Range<u64>, Range<u64>)>,
+pub struct Mapping {
+    pub mappings: Vec<Ranges>,
 }
 
-pub fn parse_almanac(input: &str) -> IResult<&str, Almanac> {
-    let (input, seeds) = parse_seeds(input)?;
-    let (input, _) = multispace1(input)?;
-    let (input, seed_to_soil) = parse_map(input, "seed-to-soil")?;
-    let (input, _) = multispace1(input)?;
-    let (input, soil_to_fertilizer) = parse_map(input, "soil-to-fertilizer")?;
-    let (input, _) = multispace1(input)?;
-    let (input, fertilizer_to_water) = parse_map(input, "fertilizer-to-water")?;
-    let (input, _) = multispace1(input)?;
-    let (input, water_to_light) = parse_map(input, "water-to-light")?;
-    let (input, _) = multispace1(input)?;
-    let (input, light_to_temperature) = parse_map(input, "light-to-temperature")?;
-    let (input, _) = multispace1(input)?;
-    let (input, temperature_to_humidity) = parse_map(input, "temperature-to-humidity")?;
-    let (input, _) = multispace1(input)?;
-    let (input, humidity_to_location) = parse_map(input, "humidity-to-location")?;
-
-    Ok((
-        input,
-        Almanac {
-            seeds,
-            seed_to_soil,
-            soil_to_fertilizer,
-            fertilizer_to_water,
-            water_to_light,
-            light_to_temperature,
-            temperature_to_humidity,
-            humidity_to_location,
-        },
-    ))
+#[derive(Debug)]
+pub struct Ranges {
+    pub src: Range<u64>,
+    pub dst: Range<u64>,
 }
 
-fn parse_seeds(input: &str) -> IResult<&str, Vec<u64>> {
+impl Mapping {
+    pub fn translate(&self, value: u64) -> u64 {
+        let valid_mapping = self
+            .mappings
+            .iter()
+            .find(|mapping| mapping.src.contains(&value));
+
+        let Some(mapping) = valid_mapping else {
+            return value;
+        };
+
+        mapping.dst.start + (value - mapping.src.start)
+    }
+}
+
+pub fn parse_almanac_part1(input: &str) -> IResult<&str, (Vec<u64>, Vec<Mapping>)> {
+    let (input, seeds) = parse_seeds_part1(input)?;
+    let (input, mappings) = many1(parse_maps)(input)?;
+
+    Ok((input, (seeds, mappings)))
+}
+
+pub fn parse_almanac_part2(input: &str) -> IResult<&str, (Vec<Range<u64>>, Vec<Mapping>)> {
+    let (input, seeds) = parse_seeds_part2(input)?;
+    let (input, mappings) = many1(parse_maps)(input)?;
+
+    Ok((input, (seeds, mappings)))
+}
+
+fn parse_seeds_part1(input: &str) -> IResult<&str, Vec<u64>> {
     preceded(tag_no_case("seeds: "), separated_list1(space1, parse_u64))(input)
 }
 
-fn parse_map<'a>(
-    input: &'a str,
-    map_name: &'a str,
-) -> IResult<&'a str, Vec<(Range<u64>, Range<u64>)>> {
+fn parse_seeds_part2(input: &str) -> IResult<&str, Vec<Range<u64>>> {
     preceded(
-        tuple((tag(map_name), tag_no_case(" map:"))),
-        many1(preceded(line_ending, line)),
+        tag_no_case("seeds: "),
+        separated_list1(
+            space1,
+            separated_pair(parse_u64, tag(" "), parse_u64)
+                .map(|(start, length)| start..start + length),
+        ),
     )(input)
 }
 
-fn line(input: &str) -> IResult<&str, (Range<u64>, Range<u64>)> {
-    let (input, (destination, source, num)) = tuple((
+fn parse_maps(input: &str) -> IResult<&str, Mapping> {
+    let (input, _) = multispace1(input)?;
+
+    preceded(
+        tuple((
+            alt((
+                // TODO: optimize, take_until?
+                tag_no_case("seed-to-soil"),
+                tag_no_case("soil-to-fertilizer"),
+                tag_no_case("fertilizer-to-water"),
+                tag_no_case("water-to-light"),
+                tag_no_case("light-to-temperature"),
+                tag_no_case("temperature-to-humidity"),
+                tag_no_case("humidity-to-location"),
+            )),
+            tag_no_case(" map:"),
+        )),
+        many1(preceded(multispace1, line)).map(|mappings| Mapping { mappings }),
+    )(input)
+}
+
+fn line(input: &str) -> IResult<&str, Ranges> {
+    let (input, (destination, source, length)) = tuple((
         parse_u64,
         preceded(tag(" "), parse_u64),
         preceded(tag(" "), parse_u64),
@@ -74,7 +93,10 @@ fn line(input: &str) -> IResult<&str, (Range<u64>, Range<u64>)> {
 
     Ok((
         input,
-        (source..(source + num), destination..(destination + num)),
+        Ranges {
+            src: source..source + length,
+            dst: destination..destination + length,
+        },
     ))
 }
 

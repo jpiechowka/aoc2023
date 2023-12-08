@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use crate::parser::parse_almanac;
+use crate::parser::parse_almanac_part1;
 
 mod parser;
 
@@ -8,14 +8,22 @@ fn main() {
     let start_time = Instant::now();
     let input_file = include_str!("../input_p1.txt");
     let solution = part1(input_file);
-    let execution_time = start_time.elapsed().as_secs();
+    let execution_time = start_time.elapsed().as_secs_f64();
     println!("[{execution_time:?} seconds] {solution}");
 }
 
-fn part1(input: &str) -> u32 {
-    let (_input, almanac) = parse_almanac(input).expect("should parse input");
-    dbg!(almanac);
-    todo!()
+fn part1(input: &str) -> u64 {
+    let (_, (seeds, mappings)) = parse_almanac_part1(input).expect("should parse input");
+
+    let locations = seeds
+        .iter()
+        .map(|seed| mappings.iter().fold(*seed, |seed, map| map.translate(seed)))
+        .collect::<Vec<u64>>();
+
+    locations
+        .into_iter()
+        .min()
+        .expect("should get the lowest value from vector")
 }
 
 #[cfg(test)]
