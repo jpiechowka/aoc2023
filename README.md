@@ -1,4 +1,4 @@
-# Advent of Code 2023 in Rust
+``# Advent of Code 2023 in Rust
 
 Advent of Code 2023 in Rust (https://adventofcode.com/)
 
@@ -22,3 +22,7 @@ Advent of Code 2023 in Rust (https://adventofcode.com/)
 | 07  | 2    | 253499763      |       |
 | 08  | 1    | 21883          |       |
 | 08  | 2    | 12833235391111 |       |
+| 09  | 1    | 1725987467     |       |
+| 09  | 2    | 971            |       |
+
+``

@@ -12,3 +12,4 @@ name = "d09p2"
 path = "src/part2.rs"
 
 [dependencies]
+itertools = { workspace = true }
