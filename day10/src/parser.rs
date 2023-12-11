@@ -12,21 +12,14 @@ use nom_locate::LocatedSpan;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum PipeType {
-    NorthSouthVerticalPipe,
-    // |
-    EastWestHorizontalPipe,
-    // -
-    NorthEastBend,
-    // L
-    NorthWestBend,
-    // J
-    SouthWestBend,
-    // 7
-    SouthEastBend,
-    // F
-    Ground,
-    // .
-    StartingPosition, // S
+    NorthSouthVerticalPipe, // |
+    EastWestHorizontalPipe, // -
+    NorthEastBend,          // L
+    NorthWestBend,          // J
+    SouthWestBend,          // 7
+    SouthEastBend,          // F
+    Ground,                 // .
+    StartingPosition,       // S
 }
 
 #[derive(Debug, Eq, PartialEq)]
