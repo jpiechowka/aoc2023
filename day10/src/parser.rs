@@ -45,6 +45,7 @@ pub struct PipeInfo<'a> {
 
 pub fn parse_input(
     input: LocatedSpan<&str>,
+    adjust_for_part2: bool,
 ) -> IResult<LocatedSpan<&str>, HashMap<IVec2, PipeType>> {
     let (input, pipes) = all_consuming(many1(terminated(
         alt((
@@ -84,16 +85,26 @@ pub fn parse_input(
         multispace0,
     )))(input)?;
 
-    Ok((
-        input,
-        pipes
-            .into_iter()
-            .filter_map(|pipe_info| {
-                (pipe_info.pipe_type != PipeType::Ground)
-                    .then_some((pipe_info.span.extra, pipe_info.pipe_type))
-            })
-            .collect(),
-    ))
+    if !adjust_for_part2 {
+        Ok((
+            input,
+            pipes
+                .into_iter()
+                .filter_map(|pipe_info| {
+                    (pipe_info.pipe_type != PipeType::Ground)
+                        .then_some((pipe_info.span.extra, pipe_info.pipe_type))
+                })
+                .collect(),
+        ))
+    } else {
+        Ok((
+            input,
+            pipes
+                .into_iter()
+                .map(|pipe_info| (pipe_info.span.extra, pipe_info.pipe_type))
+                .collect(),
+        ))
+    }
 }
 
 fn with_location(span: LocatedSpan<&str>) -> LocatedSpan<&str, IVec2> {

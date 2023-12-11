@@ -17,7 +17,7 @@ fn main() {
 }
 
 fn part1(input: &str) -> u32 {
-    let (_input, pipes) = parse_input(LocatedSpan::new(input)).expect("should parse input");
+    let (_input, pipes) = parse_input(LocatedSpan::new(input), false).expect("should parse input");
 
     let start_pos = pipes
         .iter()

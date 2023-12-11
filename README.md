@@ -1,4 +1,4 @@
-``# Advent of Code 2023 in Rust
+# Advent of Code 2023 in Rust
 
 Advent of Code 2023 in Rust (https://adventofcode.com/)
 
@@ -25,6 +25,6 @@ Advent of Code 2023 in Rust (https://adventofcode.com/)
 | 09  | 1    | 1725987467     |                                                                                      |
 | 09  | 2    | 971            |                                                                                      |
 | 10  | 1    | 6599           | https://github.com/ChristopherBiscardi/advent-of-code/tree/main/2023/rust/day-10/src |
-| 10  | 2    | xxx            | https://github.com/ChristopherBiscardi/advent-of-code/tree/main/2023/rust/day-10/src |
+| 10  | 2    | 477            | https://github.com/ChristopherBiscardi/advent-of-code/tree/main/2023/rust/day-10/src |
 
 ``
