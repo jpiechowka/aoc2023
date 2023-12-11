@@ -1,5 +1,7 @@
 use std::time::Instant;
 
+use crate::parser::parse_input;
+
 mod parser;
 
 fn main() {
@@ -11,7 +13,9 @@ fn main() {
 }
 
 fn part2(input: &str) -> i64 {
-    todo!()
+    let pipes = parse_input(input);
+    dbg!(&pipes);
+    0
 }
 
 #[cfg(test)]
