@@ -12,3 +12,6 @@ name = "d11p2"
 path = "src/part2.rs"
 
 [dependencies]
+itertools = { workspace = true }
+glam = { workspace = true }
+rstest = { workspace = true }
