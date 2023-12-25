@@ -1,3 +1,4 @@
+use itertools::{repeat_n, Itertools};
 use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::character::complete::{char, digit1, line_ending, space1};
@@ -7,7 +8,7 @@ use nom::sequence::separated_pair;
 use nom::{IResult, Parser};
 
 /// Represents the types of tiles in a puzzle input.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum TileType {
     Operational, //.
     Damaged,     // #
@@ -17,10 +18,91 @@ pub enum TileType {
 /// A struct representing a line in a puzzle.
 ///
 /// Each line consists of a vector of tiles and a vector of arrangements.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PuzzleLine {
     pub tiles: Vec<TileType>,
     pub arrangements: Vec<u8>,
+}
+
+impl PuzzleLine {
+    /// Generates all available permutations of the `PuzzleLine` tiles.
+    ///
+    /// # Returns
+    /// A vector of `PuzzleLine` objects representing all available permutations.
+    pub fn generate_available_permutations(&self) -> Vec<Self> {
+        let unknown_tiles_count = self
+            .tiles
+            .iter()
+            .filter(|t| t == &&TileType::Unknown)
+            .count();
+
+        let possible_tile_options = vec![TileType::Operational, TileType::Damaged];
+
+        let permutations = repeat_n(&possible_tile_options, unknown_tiles_count)
+            .multi_cartesian_product()
+            .map(|permutation| {
+                let mut permutation = permutation.into_iter();
+                let updated_tiles: Vec<TileType> = self
+                    .tiles
+                    .iter()
+                    .map(|tile| {
+                        if tile == &TileType::Unknown {
+                            permutation
+                                .next()
+                                .cloned()
+                                .unwrap_or_else(|| panic!("ran out of permutation values"))
+                        } else {
+                            *tile
+                        }
+                    })
+                    .collect();
+
+                PuzzleLine {
+                    tiles: updated_tiles,
+                    arrangements: self.arrangements.clone(),
+                }
+            })
+            .collect();
+
+        permutations
+    }
+
+    /// Checks if the arrangement of tiles is correct.
+    ///
+    /// The function iterates over the tiles in `self.tiles` and checks if they are arranged correctly. An arrangement is considered correct
+    /// if it matches the `self.arrangements` vector.
+    ///
+    /// # Returns
+    ///
+    /// Returns `true` if the arrangement is correct, otherwise returns `false`.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if it encounters an unexpected unknown tile (`TileType::Unknown`).
+    pub fn is_tiles_arrangement_correct(&self) -> bool {
+        let mut current_arrangement = Vec::new();
+        let mut current_value = 0;
+
+        for tile in &self.tiles {
+            match tile {
+                TileType::Damaged => current_value += 1,
+                TileType::Operational => {
+                    if current_value > 0 {
+                        current_arrangement.push(current_value);
+                        current_value = 0;
+                    }
+                }
+                TileType::Unknown => panic!("encountered unexpected unknown tile"),
+            }
+        }
+
+        // Push if there was a sequence of Damaged or Operational tiles at the end
+        if current_value > 0 {
+            current_arrangement.push(current_value);
+        }
+
+        current_arrangement == self.arrangements
+    }
 }
 
 /// Parses the input string and returns a result representing
