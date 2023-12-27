@@ -1,4 +1,3 @@
-use std::hash::Hash;
 use std::time::Instant;
 
 use indicatif::ParallelProgressIterator;
