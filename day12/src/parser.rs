@@ -1,3 +1,6 @@
+use std::fmt;
+use std::fmt::{Display, Formatter};
+
 use itertools::{repeat_n, Itertools};
 use nom::branch::alt;
 use nom::bytes::complete::tag;
@@ -25,11 +28,8 @@ pub struct PuzzleLine {
 }
 
 impl PuzzleLine {
-    /// Generates all available permutations of the `PuzzleLine` tiles.
-    ///
-    /// # Returns
-    /// A vector of `PuzzleLine` objects representing all available permutations.
-    pub fn generate_available_permutations(&self) -> Vec<Self> {
+    /// Generates all valid permutations of unknown tiles and returns the count.
+    pub fn generate_valid_permutations_and_return_count(&self) -> u32 {
         let unknown_tiles_count = self
             .tiles
             .iter()
@@ -38,7 +38,7 @@ impl PuzzleLine {
 
         let possible_tile_options = vec![TileType::Operational, TileType::Damaged];
 
-        let permutations = repeat_n(&possible_tile_options, unknown_tiles_count)
+        let valid_permutation_count = repeat_n(&possible_tile_options, unknown_tiles_count)
             .multi_cartesian_product()
             .map(|permutation| {
                 let mut permutation = permutation.into_iter();
@@ -57,14 +57,48 @@ impl PuzzleLine {
                     })
                     .collect();
 
-                PuzzleLine {
+                let permutated_puzzle = Self {
                     tiles: updated_tiles,
                     arrangements: self.arrangements.clone(),
+                };
+
+                if permutated_puzzle.is_tiles_arrangement_correct() {
+                    1u32
+                } else {
+                    0u32
                 }
             })
-            .collect();
+            .sum();
 
-        permutations
+        valid_permutation_count
+    }
+
+    /// Unfolds the records of the object by adding more copies of its tiles and arrangements.
+    ///
+    /// Each row in the tiles will have the list of spring conditions replaced with five copies of itself,
+    /// separated by unknown tile type. Similarly, the list of arrangements will be replaced with
+    /// five copies of itself.
+    ///
+    /// # Returns
+    ///
+    /// Returns a new object with unfolded tiles and arrangements.
+    pub fn unfold_records(&self) -> Self {
+        // To unfold the records, on each row, replace the list of spring conditions with five copies of itself
+        // (separated by ?) and replace the list of contiguous groups of damaged springs with five copies of itself
+        // (separated by ,)
+        let mut unfolded_tiles = self.tiles.clone();
+        let mut unfolded_arrangements = self.arrangements.clone();
+
+        for _ in 0..4 {
+            unfolded_tiles.push(TileType::Unknown);
+            unfolded_tiles.extend(&self.tiles);
+            unfolded_arrangements.extend(&self.arrangements);
+        }
+
+        Self {
+            tiles: unfolded_tiles,
+            arrangements: unfolded_arrangements,
+        }
     }
 
     /// Checks if the arrangement of tiles is correct.
@@ -79,16 +113,25 @@ impl PuzzleLine {
     /// # Panics
     ///
     /// This function will panic if it encounters an unexpected unknown tile (`TileType::Unknown`).
-    pub fn is_tiles_arrangement_correct(&self) -> bool {
-        let mut current_arrangement = Vec::new();
+    fn is_tiles_arrangement_correct(&self) -> bool {
         let mut current_value = 0;
+        let mut checked_values = 0;
+        let mut arrangements_iter = self.arrangements.iter();
 
         for tile in &self.tiles {
             match tile {
                 TileType::Damaged => current_value += 1,
                 TileType::Operational => {
                     if current_value > 0 {
-                        current_arrangement.push(current_value);
+                        if let Some(&count_to_check) = arrangements_iter.next() {
+                            if count_to_check != current_value {
+                                return false;
+                            }
+                        } else {
+                            return false;
+                        }
+
+                        checked_values += 1;
                         current_value = 0;
                     }
                 }
@@ -96,12 +139,39 @@ impl PuzzleLine {
             }
         }
 
-        // Push if there was a sequence of Damaged or Operational tiles at the end
+        // Additional check if there was a sequence of Damaged or Operational tiles at the end
         if current_value > 0 {
-            current_arrangement.push(current_value);
+            return if let Some(&count_to_check) = arrangements_iter.next() {
+                checked_values += 1;
+                count_to_check == current_value && checked_values == self.arrangements.len()
+            } else {
+                false
+            };
         }
 
-        current_arrangement == self.arrangements
+        checked_values == self.arrangements.len()
+    }
+}
+
+impl Display for PuzzleLine {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let row_string_representation = self
+            .tiles
+            .iter()
+            .map(|tile| match tile {
+                TileType::Operational => ".",
+                TileType::Damaged => "#",
+                TileType::Unknown => "?",
+            })
+            .join("");
+
+        let arrangements_string_representation = self.arrangements.iter().join(",");
+
+        write!(
+            f,
+            "{} {}",
+            row_string_representation, arrangements_string_representation
+        )
     }
 }
 
