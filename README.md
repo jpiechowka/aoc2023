@@ -29,7 +29,7 @@ Advent of Code 2023 in Rust (https://adventofcode.com/)
 | 11  | 1    | 9639160        | Trying Jetbrains AI Assistant for the first time, using Manhattan distance           |
 | 11  | 2    | 752936133304   | Trying Jetbrains AI Assistant for the first time, using Manhattan distance           |
 | 12  | 1    | 7694           |                                                                                      |
-| 12  | 2    | xxx            |                                                                                      |
+| 12  | 2    | xxx            | Suboptimal solution                                                                  |
 | 13  | 1    | xxx            |                                                                                      |
 | 13  | 2    | xxx            |                                                                                      |
 | 14  | 1    | xxx            |                                                                                      |
