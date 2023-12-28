@@ -1,7 +1,9 @@
+use std::collections::HashMap;
 use std::fmt;
 use std::fmt::{Display, Formatter};
+use std::hash::Hash;
 
-use itertools::{repeat_n, Itertools};
+use itertools::Itertools;
 use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::character::complete::{char, digit1, line_ending, space1};
@@ -11,7 +13,7 @@ use nom::sequence::separated_pair;
 use nom::{IResult, Parser};
 
 /// Represents the types of tiles in a puzzle input.
-#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
 pub enum TileType {
     Operational, //.
     Damaged,     // #
@@ -24,58 +26,82 @@ pub enum TileType {
 #[derive(Debug, Clone)]
 pub struct PuzzleLine {
     pub tiles: Vec<TileType>,
-    pub arrangements: Vec<u8>,
+    pub arrangements: Vec<usize>,
+}
+
+/// Calculates the count of valid arrangements of tiles with the given configurations and cache.
+///
+/// # Arguments
+///
+/// * `tiles` - A slice of `TileType` representing the tiles.
+/// * `arrangements` - A slice of `usize` representing the configurations of the tiles.
+/// * `cache` - A mutable `HashMap` storing the previously calculated count of arrangements.
+///
+/// # Returns
+///
+/// The count of valid arrangements based on the given tiles and configurations.
+pub fn arrangements_count_with_cache(
+    tiles: &[TileType],
+    arrangements: &[usize],
+    cache: &mut HashMap<(usize, usize), usize>,
+) -> usize {
+    if let Some(count) = cache.get(&(tiles.len(), arrangements.len())) {
+        return *count;
+    }
+
+    let mut count = 0;
+
+    if arrangements.is_empty() {
+        count = if tiles.contains(&TileType::Damaged) {
+            0
+        } else {
+            1
+        };
+
+        cache.insert((tiles.len(), arrangements.len()), count);
+        return count;
+    }
+
+    for offset in 0..tiles.len() {
+        if tiles[0..offset].contains(&TileType::Damaged) || offset + arrangements[0] > tiles.len() {
+            break;
+        }
+
+        if tiles[offset..offset + arrangements[0]].contains(&TileType::Operational) {
+            continue;
+        }
+
+        if arrangements.len() == 1 {
+            if offset + arrangements[0] == tiles.len() {
+                count += 1;
+                break;
+            } else {
+                count +=
+                    arrangements_count_with_cache(&tiles[offset + arrangements[0]..], &[], cache);
+                continue;
+            };
+        } else if offset + arrangements[0] + 1 > tiles.len() {
+            break;
+        } else if tiles[offset + arrangements[0]] == TileType::Damaged {
+            continue;
+        }
+
+        count += arrangements_count_with_cache(
+            &tiles[offset + arrangements[0] + 1..],
+            &arrangements[1..],
+            cache,
+        );
+    }
+
+    cache.insert((tiles.len(), arrangements.len()), count);
+
+    count
 }
 
 impl PuzzleLine {
-    /// Generates all valid permutations of unknown tiles and returns the count.
-    pub fn generate_valid_permutations_and_return_count(&self) -> u32 {
-        let unknown_tiles_count = self
-            .tiles
-            .iter()
-            .filter(|t| t == &&TileType::Unknown)
-            .count();
-
-        let possible_tile_options = vec![TileType::Operational, TileType::Damaged];
-
-        let valid_permutation_count = repeat_n(&possible_tile_options, unknown_tiles_count)
-            .multi_cartesian_product()
-            .map(|permutation| {
-                let mut permutation = permutation.into_iter();
-                let updated_tiles: Vec<TileType> = self
-                    .tiles
-                    .iter()
-                    .map(|tile| {
-                        if tile == &TileType::Unknown {
-                            permutation
-                                .next()
-                                .cloned()
-                                .unwrap_or_else(|| panic!("ran out of permutation values"))
-                        } else {
-                            *tile
-                        }
-                    })
-                    .collect();
-
-                let permutated_puzzle = Self {
-                    tiles: updated_tiles,
-                    arrangements: self.arrangements.clone(),
-                };
-
-                if permutated_puzzle.is_tiles_arrangement_correct() {
-                    1u32
-                } else {
-                    0u32
-                }
-            })
-            .sum();
-
-        valid_permutation_count
-    }
-
     /// Unfolds the records of the object by adding more copies of its tiles and arrangements.
     ///
-    /// Each row in the tiles will have the list of spring conditions replaced with five copies of itself,
+    /// Each row in the tiles will have the list of spring tiles replaced with five copies of itself,
     /// separated by unknown tile type. Similarly, the list of arrangements will be replaced with
     /// five copies of itself.
     ///
@@ -83,7 +109,7 @@ impl PuzzleLine {
     ///
     /// Returns a new object with unfolded tiles and arrangements.
     pub fn unfold_records(&self) -> Self {
-        // To unfold the records, on each row, replace the list of spring conditions with five copies of itself
+        // To unfold the records, on each row, replace the list of spring tiles with five copies of itself
         // (separated by ?) and replace the list of contiguous groups of damaged springs with five copies of itself
         // (separated by ,)
         let mut unfolded_tiles = self.tiles.clone();
@@ -99,57 +125,6 @@ impl PuzzleLine {
             tiles: unfolded_tiles,
             arrangements: unfolded_arrangements,
         }
-    }
-
-    /// Checks if the arrangement of tiles is correct.
-    ///
-    /// The function iterates over the tiles in `self.tiles` and checks if they are arranged correctly. An arrangement is considered correct
-    /// if it matches the `self.arrangements` vector.
-    ///
-    /// # Returns
-    ///
-    /// Returns `true` if the arrangement is correct, otherwise returns `false`.
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if it encounters an unexpected unknown tile (`TileType::Unknown`).
-    fn is_tiles_arrangement_correct(&self) -> bool {
-        let mut current_value = 0;
-        let mut checked_values = 0;
-        let mut arrangements_iter = self.arrangements.iter();
-
-        for tile in &self.tiles {
-            match tile {
-                TileType::Damaged => current_value += 1,
-                TileType::Operational => {
-                    if current_value > 0 {
-                        if let Some(&count_to_check) = arrangements_iter.next() {
-                            if count_to_check != current_value {
-                                return false;
-                            }
-                        } else {
-                            return false;
-                        }
-
-                        checked_values += 1;
-                        current_value = 0;
-                    }
-                }
-                TileType::Unknown => panic!("encountered unexpected unknown tile"),
-            }
-        }
-
-        // Additional check if there was a sequence of Damaged or Operational tiles at the end
-        if current_value > 0 {
-            return if let Some(&count_to_check) = arrangements_iter.next() {
-                checked_values += 1;
-                count_to_check == current_value && checked_values == self.arrangements.len()
-            } else {
-                false
-            };
-        }
-
-        checked_values == self.arrangements.len()
     }
 }
 
@@ -219,7 +194,7 @@ pub fn parse_line(input_line: &str) -> IResult<&str, PuzzleLine> {
             char('?').map(|_| TileType::Unknown),
         ))),
         space1,
-        separated_list1(tag(","), parse_u8),
+        separated_list1(tag(","), parse_usize),
     )(input_line)?;
 
     Ok((
@@ -231,12 +206,12 @@ pub fn parse_line(input_line: &str) -> IResult<&str, PuzzleLine> {
     ))
 }
 
-/// Parses a string slice (`&str`) into an unsigned 8-bit integer (`u8`).
+/// Parses a string slice (`&str`) into an usize (`usize`).
 ///
 /// This function takes an input string slice and attempts to parse it into
-/// an `u8`. It uses the `digit1` parser to extract one or more decimal digits
+/// an `usize`. It uses the `digit1` parser to extract one or more decimal digits
 /// from the input. Then it uses `str::parse` to convert the extracted string
-/// slice into an `u8` value. If parsing is successful, it returns the parsed
+/// slice into an `usize` value. If parsing is successful, it returns the parsed
 /// value along with the remaining input string slice. Otherwise, it returns an
 /// error indicating the parsing failure.
 ///
@@ -246,14 +221,14 @@ pub fn parse_line(input_line: &str) -> IResult<&str, PuzzleLine> {
 ///
 /// # Return Value
 ///
-/// If parsing is successful, it returns a `nom::IResult<&str, u8>` which is an
+/// If parsing is successful, it returns a `nom::IResult<&str, usize>` which is an
 /// `enum` with two variants:
 ///
 /// * `Ok((remaining, value))` - Represents a successful parsing, where `remaining`
-///   is the remaining input string slice and `value` is the parsed `u8` value.
+///   is the remaining input string slice and `value` is the parsed `usize` value.
 ///
 /// * `Err(nom::Err)` - Represents a parsing failure, where `nom::Err` is an `enum`
 ///   with various variants indicating different types of parsing errors.
-fn parse_u8(input: &str) -> IResult<&str, u8> {
-    map_res(digit1, str::parse::<u8>)(input)
+fn parse_usize(input: &str) -> IResult<&str, usize> {
+    map_res(digit1, str::parse::<usize>)(input)
 }

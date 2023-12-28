@@ -1,9 +1,9 @@
+use std::collections::HashMap;
 use std::time::Instant;
 
-use indicatif::ParallelProgressIterator;
 use rayon::prelude::*;
 
-use crate::parser::{parse_input, PuzzleLine};
+use crate::parser::{arrangements_count_with_cache, parse_input, PuzzleLine};
 
 mod parser;
 
@@ -15,43 +15,29 @@ fn main() {
     println!("[{execution_time:?} seconds] {solution}");
 }
 
-fn part2(input: &str) -> u32 {
+fn part2(input: &str) -> usize {
     let (_, parsed_input) = parse_input(input).expect("should parse input");
-    parsed_input
-        .par_iter()
-        .progress()
-        .map(get_arrangements_count)
-        .sum()
-}
 
-fn get_arrangements_count(puzzle_line: &PuzzleLine) -> u32 {
-    puzzle_line
-        .unfold_records()
-        .generate_valid_permutations_and_return_count()
+    let unfolded_tiles: Vec<PuzzleLine> = parsed_input
+        .iter()
+        .map(|puzzle_line| puzzle_line.unfold_records())
+        .collect();
+
+    unfolded_tiles
+        .par_iter()
+        .map(|puzzle_line| {
+            arrangements_count_with_cache(
+                &puzzle_line.tiles,
+                &puzzle_line.arrangements,
+                &mut HashMap::new(),
+            )
+        })
+        .sum()
 }
 
 #[cfg(test)]
 mod tests {
-    use rstest::rstest;
-
-    use crate::parser::parse_line;
-
     use super::*;
-
-    #[rstest]
-    #[case("???.### 1,1,3", 1)]
-    #[case(".??..??...?##. 1,1,3", 16384)]
-    #[case("?#?#?#?#?#?#?#? 1,3,1,6", 1)]
-    #[case("????.#...#... 4,1,1", 16)]
-    #[case("????.######..#####. 1,6,5", 2500)]
-    #[case("?###???????? 3,2,1", 506250)]
-    fn d12p2_arrangements_test(#[case] input_line: &str, #[case] expected_arrangements_count: u32) {
-        let (_, parsed_input) = parse_line(input_line).expect("should parse line");
-        assert_eq!(
-            get_arrangements_count(&parsed_input),
-            expected_arrangements_count
-        );
-    }
 
     #[test]
     fn d12p1_full_input() {

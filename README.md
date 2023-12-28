@@ -28,8 +28,8 @@ Advent of Code 2023 in Rust (https://adventofcode.com/)
 | 10  | 2    | 477            | https://github.com/ChristopherBiscardi/advent-of-code/tree/main/2023/rust/day-10/src |
 | 11  | 1    | 9639160        | Trying Jetbrains AI Assistant for the first time, using Manhattan distance           |
 | 11  | 2    | 752936133304   | Trying Jetbrains AI Assistant for the first time, using Manhattan distance           |
-| 12  | 1    | 7694           |                                                                                      |
-| 12  | 2    | xxx            | Suboptimal solution                                                                  |
+| 12  | 1    | 7694           | Recursion + cache                                                                    |
+| 12  | 2    | 5071883216318  | Recursion + cache                                                                    |
 | 13  | 1    | xxx            |                                                                                      |
 | 13  | 2    | xxx            |                                                                                      |
 | 14  | 1    | xxx            |                                                                                      |

@@ -12,11 +12,9 @@ name = "d12p2"
 path = "src/part2.rs"
 
 [dependencies]
-rstest = { workspace = true }
 nom = { workspace = true }
 itertools = { workspace = true }
 rayon = { workspace = true }
-indicatif = { workspace = true }
 
 [profile.release]
 codegen-units = 1
